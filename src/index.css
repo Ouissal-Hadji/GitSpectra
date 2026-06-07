@@ -1,0 +1,133 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@450;500;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-app: #f4f5f7;       /* Soft light grayish blue */
+  --bg-card: #ffffff;      /* Perfect clean white */
+  --bg-card-hover: #eaecee;/* Slightly darker gray for hover */
+  --border-main: #d1d5db;  /* Clean gray border */
+  --text-main: #18181b;    /* Dark charcoal text */
+  --text-muted: #52525b;   /* Muted readable standard text level */
+  --grid-gradient: linear-gradient(to right, rgba(0, 0, 0, 0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+}
+
+:root.dark, .dark {
+  --bg-app: #09090b;       /* Dark void index */
+  --bg-card: #18181b;      /* High contrast dark gray panel */
+  --bg-card-hover: #222226;/* Highlight dark gray */
+  --border-main: #27272a;  /* Dark outline border */
+  --text-main: #fafafa;    /* High contrast text */
+  --text-muted: #a1a1aa;   /* Soft slate gray subheadings */
+  --grid-gradient: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+@theme {
+  --font-sans: "Inter", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Premium "Sophisticated" Theme Color Overrides synced to variables */
+  --color-zinc-950: var(--bg-app);
+  --color-zinc-900: var(--bg-card);
+  --color-zinc-850: var(--bg-card-hover);
+  --color-zinc-800: var(--border-main);
+  
+  --color-slate-50: var(--bg-app);
+  --color-slate-100: var(--bg-card);
+  --color-slate-200: var(--border-main);
+}
+
+/* Substring selectors to cleanly override hardcoded classes across the app layout */
+[class*="bg-[#09090b]"] {
+  background-color: var(--bg-app) !important;
+}
+
+[class*="bg-[#18181b]"] {
+  background-color: var(--bg-card) !important;
+}
+
+[class*="bg-[#0e0e11]"] {
+  background-color: var(--bg-app) !important;
+}
+
+[class*="bg-[#141416]"] {
+  background-color: var(--bg-app) !important;
+}
+
+[class*="hover:bg-[#27272a]"]:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+[class*="border-[#27272a]"] {
+  border-color: var(--border-main) !important;
+}
+
+[class*="text-[#fafafa]"] {
+  color: var(--text-main) !important;
+}
+
+[class*="text-zinc-500"],
+[class*="text-zinc-400"],
+[class*="text-slate-500"],
+[class*="text-slate-400"] {
+  color: var(--text-muted) !important;
+}
+
+#landing-grid-overlay {
+  background-image: var(--grid-gradient) !important;
+}
+
+/* Recharts data visualizations adaptive theme rules */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border-main) !important;
+  opacity: 0.8;
+}
+
+.recharts-default-tooltip {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-main) !important;
+  border-radius: 10px !important;
+  color: var(--text-main) !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--text-main) !important;
+  font-weight: 700 !important;
+}
+
+.recharts-tooltip-item {
+  color: var(--text-muted) !important;
+}
+
+/* Custom modern scrollbar stylings */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+/* Hide scrollbars completely for scrollable headers on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}

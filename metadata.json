@@ -1,0 +1,6 @@
+{
+  "name": "GitSpectra",
+  "description": "Premium Developer Analytics Dashboard for interactive GitHub repository audits, developer score metrics, technology highlights, and Gemini AI-powered portfolio insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
