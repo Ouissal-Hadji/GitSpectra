@@ -67,7 +67,7 @@ async function fetchGitHub(endpoint: string, customToken?: string) {
     "User-Agent": "GitSpectra-Application",
   };
 
-  const activeToken = customToken || GITHUB_TOKEN;
+ const activeToken = customToken || githubToken;
   if (activeToken) {
     headers["Authorization"] = `token ${activeToken}`;
   }
