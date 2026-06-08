@@ -32,8 +32,8 @@ if (geminiApiKey && geminiApiKey !== "MY_GEMINI_API_KEY") {
 }
 
 // GitHub API Token
-// We have a direct pre-configured token in the request description. Let's define it as a fallback.
-const githubToken = process.env.GITHUB_TOKEN; // أو الاسم الذي تستخدمينه للمتغير
+const githubToken = process.env.GITHUB_TOKEN;
+
 // Standard Color palette for languages
 const LANGUAGE_COLORS: Record<string, string> = {
   javascript: "#f1e05a",
@@ -67,7 +67,8 @@ async function fetchGitHub(endpoint: string, customToken?: string) {
     "User-Agent": "GitSpectra-Application",
   };
 
- const activeToken = customToken || githubToken;
+  // تم التصحيح هنا لاستخدام githubToken المعرف في السطر 36
+  const activeToken = customToken || githubToken;
   if (activeToken) {
     headers["Authorization"] = `token ${activeToken}`;
   }
@@ -100,7 +101,6 @@ app.get("/api/analyze/:username", async (req, res) => {
     let isSelf = false;
 
     // 1. Fetch user profile
-    // If a custom token is provided, verify who the token belongs to
     if (customToken) {
       try {
         const authenticatedUser = await fetchGitHub("user", customToken);
@@ -120,10 +120,8 @@ app.get("/api/analyze/:username", async (req, res) => {
 
     // 2. Fetch up to 100 repositories
     if (isSelf) {
-      // /user/repos retrieves BOTH public and private repositories belonging to the authenticated token owner
       repositories = await fetchGitHub("user/repos?per_page=100&sort=updated&type=all", customToken);
     } else {
-      // /users/{username}/repos is limited by GitHub's architecture to public repos ONLY
       repositories = await fetchGitHub(`users/${username}/repos?per_page=100&sort=updated`, customToken);
     }
 
@@ -142,7 +140,6 @@ app.get("/api/analyze/:username", async (req, res) => {
       .map(([name, count]) => {
         const pct = totalLanguageCount > 0 ? (count / totalLanguageCount) * 100 : 0;
         const color = LANGUAGE_COLORS[name] || LANGUAGE_COLORS["other"];
-        // Format display name properly (e.g. typescript -> TypeScript)
         const formatName = name.charAt(0).toUpperCase() + name.slice(1);
         return {
           name: formatName,
@@ -194,14 +191,14 @@ app.get("/api/analyze/:username", async (req, res) => {
       : 365;
 
     // 6. Calculate Developer Score (100 Max)
-    const repoCountScore = Math.min(repositories.length * 0.8, 20); // 20 Max for 25+ repositories
-    const langDiversityScore = Math.min(Object.keys(languageCounts).length * 3, 15); // 15 Max for 5+ languages
-    const popularityScore = Math.min((totalStars * 1.5) + (totalForks * 2), 35); // 35 Max
+    const repoCountScore = Math.min(repositories.length * 0.8, 20);
+    const langDiversityScore = Math.min(Object.keys(languageCounts).length * 3, 15);
+    const popularityScore = Math.min((totalStars * 1.5) + (totalForks * 2), 35);
     const consistencyScore = daysSinceLastPush <= 7 ? 15 : daysSinceLastPush <= 30 ? 12 : daysSinceLastPush <= 90 ? 8 : 4;
-    const codeSizeScore = Math.min((totalSizeKB / 1000) * 1.5, 15); // 15 Max
+    const codeSizeScore = Math.min((totalSizeKB / 1000) * 1.5, 15);
 
     const overallScore = Math.round(repoCountScore + langDiversityScore + popularityScore + consistencyScore + codeSizeScore);
-    const scoreVal = Math.min(Math.max(overallScore, 10), 99); // Clamped between 10-99 for realistic score styling
+    const scoreVal = Math.min(Math.max(overallScore, 10), 99);
 
     let tier: DeveloperScoreDetail["tier"] = "Beginner Developer";
     if (scoreVal >= 90) tier = "Elite Developer";
@@ -284,20 +281,17 @@ app.get("/api/analyze/:username", async (req, res) => {
     ];
 
     // 8. Compute Stars Trend and Activity Trend
-    // Star trend mapping top 5 starred repos
     const sortedByStars = [...repositories].sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 5);
     const starsTrend = sortedByStars.map((r) => ({
       name: r.name,
       stars: r.stargazers_count,
     }));
 
-    // Activity trend repos per year
     const yearlyMap: Record<number, number> = {};
     repositories.forEach((repo) => {
       const year = new Date(repo.created_at).getFullYear();
       yearlyMap[year] = (yearlyMap[year] || 0) + 1;
     });
-    const currentYear = new Date().getFullYear();
     const activityTrend = Object.entries(yearlyMap)
       .map(([year, count]) => ({
         year: parseInt(year),
@@ -305,7 +299,6 @@ app.get("/api/analyze/:username", async (req, res) => {
       }))
       .sort((a, b) => a.year - b.year);
 
-    // Fill empty years if sparse
     if (activityTrend.length === 1) {
       activityTrend.unshift({ year: activityTrend[0].year - 1, count: 0 });
     }
@@ -370,7 +363,6 @@ Format the output strictly as a JSON object matching this TypeScript interface:
         insights = generateFallbackInsights(username, profile, languages, repositories, totalStars, tier);
       }
     } else {
-      // Local fallback generation
       insights = generateFallbackInsights(username, profile, languages, repositories, totalStars, tier);
     }
 
@@ -432,25 +424,21 @@ function generateFallbackInsights(
   };
 }
 
-// Vite and static asset configuration
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
+// التعديل السحابي الحاسم هنا لتوافق Vercel Serverless
+export default app;
+
+if (process.env.NODE_ENV !== "production") {
+  async function startServer() {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  startServer();
 }
-
-startServer();
