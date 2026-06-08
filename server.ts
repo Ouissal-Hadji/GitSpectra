@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import express from "express";
+import express, { Request, Response } from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
@@ -13,6 +13,7 @@ import { AnalyticsData, GitHubProfile, GitHubRepository, LanguageStat, Developer
 dotenv.config();
 
 const app = express();
+// تعديل حاسم: قراءة المنفذ ديناميكياً من بيئة Render أو العودة لـ 3000 محلياً
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -67,7 +68,6 @@ async function fetchGitHub(endpoint: string, customToken?: string) {
     "User-Agent": "GitSpectra-Application",
   };
 
-  // ✅ تصحيح نهائي وشامل لحالة الأحرف ليتطابق مع السطر 36
   const activeToken = customToken || githubToken;
   if (activeToken) {
     headers["Authorization"] = `token ${activeToken}`;
@@ -87,7 +87,7 @@ async function fetchGitHub(endpoint: string, customToken?: string) {
 }
 
 // Master endpoint for developer profiling
-app.get("/api/analyze/:username", async (req, res) => {
+app.get("/api/analyze/:username", async (req: Request, res: Response) => {
   const { username } = req.params;
   const customToken = req.headers["x-github-token"] as string | undefined;
 
@@ -116,6 +116,11 @@ app.get("/api/analyze/:username", async (req, res) => {
 
     if (!profile) {
       profile = await fetchGitHub(`users/${username}`, customToken);
+    }
+
+    // ضمان حماية الـ Type Checking للتأكد من أن الكائن ليس null
+    if (!profile) {
+      return res.status(404).json({ error: "GitHub user not found." });
     }
 
     // 2. Fetch up to 100 repositories
@@ -166,7 +171,6 @@ app.get("/api/analyze/:username", async (req, res) => {
       languages = parsedLanguages;
     }
 
-    // Default if no languages used
     if (languages.length === 0) {
       languages.push({ name: "Markdown", count: 0, percentage: 100, color: "#71717a" });
     }
@@ -339,7 +343,6 @@ Format the output strictly as a JSON object matching this TypeScript interface:
 
         const response = await ai.models.generateContent({
           model: "gemini-3.5-flash",
-          model: "gemini-1.5-flash",
           contents: prompt,
           config: {
             responseMimeType: "application/json",
@@ -391,6 +394,7 @@ Format the output strictly as a JSON object matching this TypeScript interface:
   }
 });
 
+// دالة الـ Fallback المصححة لتلقي البروفايل المؤكد بشكل صارم
 function generateFallbackInsights(
   username: string,
   profile: GitHubProfile,
@@ -403,7 +407,7 @@ function generateFallbackInsights(
   const repoCount = repositories.length;
 
   return {
-    summary: `${username} is a ${tier} with a focus on ${topLang}. Across ${repoCount} public repositories, they show dedicated investment in structured programming practices and regular asset updates.`,
+    summary: `${username} is a ${tier} with a focus on ${topLang}. Across ${repoCount} public repositories, they show dedicated investment in structured programming practices.`,
     strengths: [
       `Strong execution in ${topLang} with a reliable repository base.`,
       `Pioneered ${repoCount} projects demonstrating hands-on development experience.`,
@@ -425,21 +429,34 @@ function generateFallbackInsights(
   };
 }
 
-// التعديل السحابي الحاسم لتوافق وتصدير محرك Express عبر منصة Vercel 
-export default app;
+// --- قسم توجيه وإطلاق السيرفر بشكل دائم ومتوافق مع البيئة السحابية ---
 
-if (process.env.NODE_ENV !== "production") {
-  async function startServer() {
+// عند العمل في السحابة، قم بخدمة الفرونت إند المضغوط
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(process.cwd(), "dist")));
+  
+  app.get("*", (req: Request, res: Response) => {
+    res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+  });
+}
+
+// دالة البدء المستمر، تعمل في كافة البيئات وتفتح الاستماع على الـ PORT الديناميكي
+async function startServer() {
+  if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
   }
 
-  startServer();
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 GitSpectra Server is live and running on port ${PORT}`);
+  });
 }
+
+startServer().catch((err) => {
+  console.error("Failed to boot GitSpectra server:", err);
+});
+
+export default app;
