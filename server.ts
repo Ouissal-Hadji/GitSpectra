@@ -13,7 +13,7 @@ import { AnalyticsData, GitHubProfile, GitHubRepository, LanguageStat, Developer
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -67,7 +67,7 @@ async function fetchGitHub(endpoint: string, customToken?: string) {
     "User-Agent": "GitSpectra-Application",
   };
 
-  // تم التصحيح هنا لاستخدام githubToken المعرف في السطر 36
+  // ✅ تصحيح نهائي وشامل لحالة الأحرف ليتطابق مع السطر 36
   const activeToken = customToken || githubToken;
   if (activeToken) {
     headers["Authorization"] = `token ${activeToken}`;
@@ -339,6 +339,7 @@ Format the output strictly as a JSON object matching this TypeScript interface:
 
         const response = await ai.models.generateContent({
           model: "gemini-3.5-flash",
+          model: "gemini-1.5-flash",
           contents: prompt,
           config: {
             responseMimeType: "application/json",
@@ -424,7 +425,7 @@ function generateFallbackInsights(
   };
 }
 
-// التعديل السحابي الحاسم هنا لتوافق Vercel Serverless
+// التعديل السحابي الحاسم لتوافق وتصدير محرك Express عبر منصة Vercel 
 export default app;
 
 if (process.env.NODE_ENV !== "production") {
